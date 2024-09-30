@@ -8,7 +8,11 @@ wandb.login()
 config={"num_classes":10,"learning_rate":0.001,"batch_size":128,"num_epochs":10}
 wandb.init(project="myfirstcnn", config=config)
 
-class myfirstcnn(nn.Module):
+
+#Convolutional neural network for image identification tasks. 
+
+#class of the model. 
+class cnn(nn.Module):
     def __init__(self,num_classes):
         super(myfirstcnn, self).__init__()
         self.conv1=nn.Conv2d(in_channels=3,out_channels=16, kernel_size=3, stride=1, padding=1)
@@ -20,6 +24,7 @@ class myfirstcnn(nn.Module):
         self.dropout=nn.Dropout(0.5)
         self.fc2= nn.Linear(64,num_classes)
 
+#Forward pass used in training
     def forward(self,x):
         x=self.conv1(x)
         x=self.relu(x)
@@ -33,23 +38,35 @@ class myfirstcnn(nn.Module):
         x=self.dropout(x)
         x=self.fc2(x)
         return x
+    
+#number of classes of data    
 num_classes=10
+#learning rate
 learning_rate=0.001
+#number of images loaded in at once
 batch_size=128
+#number of times model sees whole dataset while training
 num_epochs=10
 
-model=myfirstcnn(config['num_classes'])
+#initialize the model
+model=cnn(config['num_classes'])
 
+#loss function
 criterion=nn.CrossEntropyLoss()
+#optimizer function
 optimizer=optim.Adam(model.parameters(),lr=config['learning_rate'])
 
 transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,0.5,0.5,),(0.5,0.5,0.5))])
+#test dataset to train model
 train_dataset = datasets.CIFAR10(root='./data',train=True,transform=transform,download=True)
 test_dataset= datasets.CIFAR10(root='./data',train=False,transform=transform)
 train_subset=torch.utils.data.Subset(train_dataset, range(500))
 test_subset=torch.utils.data.Subset(test_dataset, range(100))
 train_loader=torch.utils.data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
 test_loader=torch.utils.data.DataLoader(test_dataset, batch_size=config['batch_size'], shuffle=False)
+
+
+#training convolutional neural network
 
 for epoch in range(config['num_epochs']):
     running_loss = 0.0
@@ -62,8 +79,11 @@ for epoch in range(config['num_epochs']):
         running_loss+=loss.item()
     print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss / len(train_loader)}")
 
+#evaluating how well the model is after training
 correct=0
 total=0
+
+
 with torch.no_grad():
     for images, labels in test_loader:
         outputs= model(images)
